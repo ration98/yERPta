@@ -30,7 +30,7 @@ function GrupAkses({ initialData, groupId }) {
   const [expandAll, setExpandAll] = useState(true); // Expand/collapse global
 
   useEffect(() => {
-    const savedPermissions = localStorage.getItem("permissions");
+    const savedPermissions = localStorage.getItem(`permissions_${groupId}`);
     if (savedPermissions) {
       const parsedData = JSON.parse(savedPermissions);
 
@@ -69,8 +69,18 @@ function GrupAkses({ initialData, groupId }) {
       setModuleToggle(formattedArray.map(() => false));
       setGlobalToggle(false);
       setModuleExpand(formattedArray.map(() => false));
+
+      //simpan ke localstorage saat pertama kali
+      localStorage.setItem(
+        `permissions_${groupId}`,
+        JSON.stringify(formattedArray)
+      );
     }
-  }, [initialData]);
+  }, [initialData, groupId]);
+
+  const savePermissionsToLocalStorage = (updatedData) => {
+    localStorage.setItem(`permissions_${groupId}`, JSON.stringify(updatedData));
+  };
 
   // **Toggle Izin Individu**
   const togglePermission = async (moduleIndex, permIndex) => {
@@ -95,7 +105,7 @@ function GrupAkses({ initialData, groupId }) {
 
       permission.enabled = !permission.enabled;
       setData(updatedData);
-      localStorage.setItem("permissions", JSON.stringify(updatedData));
+      savePermissionsToLocalStorage(updatedData);
     } catch (error) {
       console.error("Failed to toggle permission: ", error);
     }
@@ -107,43 +117,51 @@ function GrupAkses({ initialData, groupId }) {
     const updatedData = [...data];
 
     try {
-      if (!moduleToggle[moduleIndex]) {
-        // Jika saat ini None, ubah ke All: tambahkan izin
-        await addAksesGrupByModul(
-          module.permissions.map((perm) => ({
-            fkGrup: groupId,
-            fkAkses: perm.fkAkses,
-            fkPosisiModul: module.posisiModul,
-          }))
+      const newToggleState = !moduleToggle[moduleIndex]; // Status toggle baru
+
+      if (newToggleState) {
+        // Aktifkan semua izin dalam modul
+        const permissionsToInsert = module.permissions.filter(
+          (perm) => !perm.enabled
         );
+        if (permissionsToInsert.length > 0) {
+          await addAksesGrupByModul(
+            permissionsToInsert.map((perm) => ({
+              fkGrup: groupId,
+              fkAkses: perm.fkAkses,
+              fkPosisiModul: module.posisiModul,
+            }))
+          );
+        }
       } else {
-        // Jika saat ini All, ubah ke None: hapus izin
+        // Nonaktifkan semua izin dalam modul
         await deleteAksesGrupByModul(module.posisiModul);
       }
 
-      // Perbarui status 'enabled' untuk setiap permission di modul
-      const newToggleState = !moduleToggle[moduleIndex];
-      updatedData[moduleIndex].permissions = updatedData[
-        moduleIndex
-      ].permissions.map((perm) => ({
+      // Perbarui state `enabled` untuk izin dalam modul
+      updatedData[moduleIndex].permissions = module.permissions.map((perm) => ({
         ...perm,
         enabled: newToggleState,
       }));
+
       setData(updatedData);
 
-      // Perbarui toggle untuk modul
+      // Perbarui toggle modul
       const updatedModuleToggle = [...moduleToggle];
       updatedModuleToggle[moduleIndex] = newToggleState;
       setModuleToggle(updatedModuleToggle);
 
-      // Perbarui globalToggle
+      // Perbarui globalToggle berdasarkan semua moduleToggle
       const isAllPermissionsEnabled = updatedModuleToggle.every(
         (toggle) => toggle
       );
       setGlobalToggle(isAllPermissionsEnabled);
 
       // Simpan ke localStorage
-      localStorage.setItem("permissions", JSON.stringify(updatedData));
+      localStorage.setItem(
+        `permissions_${groupId}`,
+        JSON.stringify(updatedData)
+      );
     } catch (error) {
       console.error("Failed to toggle module permissions:", error);
     }
@@ -186,7 +204,7 @@ function GrupAkses({ initialData, groupId }) {
       setModuleToggle(updatedModuleToggle);
 
       // Simpan data yang diupdate ke localStorage
-      localStorage.setItem("permissions", JSON.stringify(updatedData));
+      savePermissionsToLocalStorage(updatedData);
     } catch (error) {
       console.error("Failed to toggle all permissions:", error);
     }
