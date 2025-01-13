@@ -388,28 +388,20 @@ const Routes = () => {
   const router = useRouter();
   // console.log(user);
 
-  /*{
-    const handleLogout = () => {
-      console.log("keluar");
-      // Hapus token dari localStorage
-      localStorage.removeItem("authToken");
-      // Reset data user di context
-      setUser(null);
-      // Arahkan ke halaman login
-      router.push("/authentication/sign-in/basic");
-    };
-  }*/
 
-  const handleLogout = async () => {
-    // logout(); // Panggil fungsi logout dari context
-    // router.push("/authentication/sign-in/basic");
+  // const handleLogout = () => {
+  //   console.log("keluar");
+  //   // Hapus token dari localStorage
+  //   localStorage.removeItem("authToken");
+  //   // Reset data user di context
+  //   setUser(null);
+  //   // Arahkan ke halaman login
+  //   router.push("/authentication/sign-in/basic");
+  // };
 
-    try {
-      await logout();
-      router.push("/authentication/sign-in/basic");
-    } catch (error) {
-      console.error("Error saat logout:", error);
-    }
+  const handleLogout = () => {
+    logout(); // Panggil fungsi logout dari context
+    router.push("/authentication/sign-in/basic");
   };
 
   return getRoutes(user, handleLogout); // Kirim handleLogout sebagai argumen

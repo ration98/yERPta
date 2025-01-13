@@ -26,8 +26,8 @@ function GrupAkses({ initialData, groupId }) {
   const [data, setData] = useState([]);
   const [globalToggle, setGlobalToggle] = useState(true); // All/None global
   const [moduleToggle, setModuleToggle] = useState([]); // All/None per modul
-  const [expandAll, setExpandAll] = useState(false); // Expand/collapse global
-  const [moduleExpand, setModuleExpand] = useState(() => initialData.map(() => false)); // Expand/collapse modul
+  const [moduleExpand, setModuleExpand] = useState([]); // Expand/collapse modul
+  const [expandAll, setExpandAll] = useState(true); // Expand/collapse global
 
   useEffect(() => {
     const savedPermissions = localStorage.getItem(`permissions_${groupId}`);
@@ -46,8 +46,6 @@ function GrupAkses({ initialData, groupId }) {
       // Perbarui globalToggle berdasarkan data izin
       const isAllPermissionsEnabled = newModuleToggle.every((toggle) => toggle);
       setGlobalToggle(isAllPermissionsEnabled);
-
-      setModuleExpand(parsedData.map(() => false));
     } else {
       // Format data jika tidak ada di localStorage
       const formattedData = initialData.reduce((acc, item) => {
@@ -212,18 +210,17 @@ function GrupAkses({ initialData, groupId }) {
     }
   };
 
-  // **Expand/Collapse Semua Modul**
-  const handleExpandAll = () => {
-    const newExpandState = !expandAll;
-    setExpandAll(newExpandState);
-    setModuleExpand(moduleExpand.map(() => newExpandState));
-  };
-
   // **Expand/Collapse Modul**
   const toggleExpandModule = (moduleIndex) => {
     const updatedModuleExpand = [...moduleExpand];
     updatedModuleExpand[moduleIndex] = !updatedModuleExpand[moduleIndex];
     setModuleExpand(updatedModuleExpand);
+  };
+
+  // **Expand/Collapse Semua Modul**
+  const handleExpandAll = () => {
+    setExpandAll(!expandAll);
+    setModuleExpand(moduleExpand.map(() => !expandAll));
   };
 
   return (

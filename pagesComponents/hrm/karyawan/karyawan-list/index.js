@@ -383,7 +383,7 @@ function PenggunasList() {
         },
       },
       {
-        Header: "Status Akun",
+        Header: "Status",
         accessor: "status",
         width: "10%",
         Cell: ({ row }) => (

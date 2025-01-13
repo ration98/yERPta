@@ -54,13 +54,13 @@ const useStyles = makeStyles(() => ({
     backgroundColor: "green",
     color: "#fff",
     padding: "5px",
-    borderRadius: "20px",
+    borderRadius: "10px",
   },
   statusClosed: {
     backgroundColor: "red",
     color: "#fff",
     padding: "5px",
-    borderRadius: "20px",
+    borderRadius: "10px",
   },
   avatar: {
     width: 30,
@@ -80,9 +80,7 @@ function PenggunasList() {
   const [rows, setRows] = useState([]);
   //filter status akun
   // const [filterStatus, setFilterStatus] = useState(null); //old
-  const [filterStatus, setFilterStatus] = useState([
-    { sandi: "1", keterangan: "Aktif" },
-  ]);
+  const [filterStatus, setFilterStatus] = useState([{ sandi: "1", keterangan: "Aktif" }]);
   const [statusOptions, setStatusOptions] = useState([]);
   const [filteredRows, setFilteredRows] = useState([]);
   //checkbox
@@ -123,8 +121,7 @@ function PenggunasList() {
   };
 
   // Old
-  {
-    /* } const applyFilters = (statusFilter) => {
+  {/* } const applyFilters = (statusFilter) => {
     let filteredData = [...rows];
     if (statusFilter) {
       filteredData = filteredData.filter(
@@ -133,8 +130,7 @@ function PenggunasList() {
     }
     setFilteredRows(filteredData);
   };
-  */
-  }
+  */}
 
   // NEW
   const applyFilters = (statusFilter) => {
@@ -143,13 +139,11 @@ function PenggunasList() {
     if (statusFilter && statusFilter.length > 0) {
       // Filter data berdasarkan keterangan status yang dipilih
       const selectedStatuses = statusFilter.map((filter) => filter.keterangan);
-      filteredData = filteredData.filter((row) =>
-        selectedStatuses.includes(row.status)
-      );
+      filteredData = filteredData.filter((row) => selectedStatuses.includes(row.status));
     }
 
     setFilteredRows(filteredData);
-  };
+  }
 
   const handleFilterChangeStatus = (event, newValue) => {
     setFilterStatus(newValue);
@@ -255,19 +249,15 @@ function PenggunasList() {
     return null;
   };
 
-  const defaultMaleAvatar =
-    "/assets/images/foto-pengguna-default/Laki-Laki.png";
-  const defaultFemaleAvatar =
-    "/assets/images/foto-pengguna-default/Perempuan.png";
+  const defaultMaleAvatar = "/assets/images/foto-pengguna-default/Laki-Laki.png";
+  const defaultFemaleAvatar = "/assets/images/foto-pengguna-default/Perempuan.png";
 
   const CustomCell = ({ row, value }) => {
     const classes = useStyles();
     const router = useRouter();
 
     const handleClick = () => {
-      router.push(
-        `/karyawan-dan-grup/karyawan/karyawan-view?id=${row.original.noReferensi}`
-      );
+      router.push(`/karyawan-dan-grup/karyawan/karyawan-view?id=${row.original.noReferensi}`);
     };
 
     const getStatusCellStyle = (status) => {
@@ -369,41 +359,31 @@ function PenggunasList() {
         Cell: ({ value }) => {
           if (!value) return "-"; // Jika tidak ada nilai, tampilkan tanda "-"
 
-          try {
-            // Ubah format "2025-01-09 09:04:07.462487" menjadi ISO 8601
-            const isoDate = value.replace(" ", "T"); // Ganti spasi dengan "T"
+          const date = new Date(value);
 
-            const date = new Date(isoDate); // Buat objek Date
+          // Format tanggal menjadi "dd-MM-yyyy"
+          const formattedDate = date
+            .toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+            .replace(/\//g, "-");
 
-            if (isNaN(date)) return "Invalid Date"; // Jika tanggal tetap tidak valid
+          // Format waktu menjadi "jam:menit:detik"
+          const formattedTime = date
+            .toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+            .replace(/\./g, ":"); // Ubah titik menjadi titik dua
 
-            // Format tanggal menjadi "dd-MM-yyyy"
-            const formattedDate = date
-              .toLocaleDateString("id-ID", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              })
-              .replace(/\//g, "-");
-
-            // Format waktu menjadi "jam:menit:detik"
-            const formattedTime = date
-              .toLocaleTimeString("id-ID", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })
-              .replace(/\./g, ":"); // Ubah titik menjadi titik dua
-
-            return `${formattedDate} ${formattedTime}`;
-          } catch (error) {
-            console.error("Error parsing date:", error);
-            return "Invalid Date"; // Kembalikan nilai default jika ada error
-          }
+          return `${formattedDate} ${formattedTime}`;
         },
       },
       {
-        Header: "Status Akun",
+        Header: "Status",
         accessor: "status",
         Cell: ({ row }) => (
           <div className={getStatusCellStyle(row.original.status)}>
@@ -416,9 +396,7 @@ function PenggunasList() {
   };
 
   const handleEdit = (noReferensi) => {
-    router.push(
-      `/karyawan-dan-grup/karyawan/karyawan-detail?noReferensi=${noReferensi}`
-    );
+    router.push(`/karyawan-dan-grup/karyawan/karyawan-detail?noReferensi=${noReferensi}`);
   };
 
   const handleDelete = async (sandi) => {
@@ -474,9 +452,7 @@ function PenggunasList() {
               variant="gradient"
               color="dark"
               size="small"
-              onClick={() =>
-                router.push("/karyawan-dan-grup/karyawan/karyawan-detail")
-              }
+              onClick={() => router.push("/karyawan-dan-grup/karyawan/karyawan-detail")}
             >
               &nbsp; Tambah Data
             </MDButton>
@@ -484,7 +460,7 @@ function PenggunasList() {
         </Grid>
 
         <Grid container spacing={2} alignItems="center">
-          {/* Filter Status Akun */}
+        {/* Filter Status Akun */}
           <Grid item xs={12} sm={6} md={2.2}>
             <Autocomplete
               multiple
@@ -492,9 +468,7 @@ function PenggunasList() {
               getOptionLabel={(option) => option.keterangan}
               value={filterStatus}
               onChange={handleFilterChangeStatus}
-              isOptionEqualToValue={(option, value) =>
-                option.keterangan === value.keterangan
-              }
+              isOptionEqualToValue={(option, value) => option.keterangan === value.keterangan}
               renderInput={(params) => (
                 <TextField
                   {...params}
