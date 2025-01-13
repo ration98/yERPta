@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { useRouter } from "next/router";
+import { logoutUser } from "../api/auth/logout";
 
 const UserContext = createContext();
 
@@ -56,11 +57,23 @@ export const UserProvider = ({ children }) => {
     console.log("useEffect dipanggil karena expiresAt berubah:", expiresAt);
   }, [expiresAt]);
 
-  const logout = () => {
+  const logout = async () => {
     console.log("Memanggil logout...");
-    setUser(null);
-    setExpiresAt(null);
-    router.push("/authentication/sign-in/basic");
+    try {
+      // Panggil API logout
+      await logoutUser();
+      console.log("Logout berhasil di server");
+
+      // Hapus data pengguna dari context
+      setUser(null);
+      setExpiresAt(null);
+
+      // Redirect ke halaman sign-in
+      router.push("/authentication/sign-in/basic");
+    } catch (error) {
+      console.error("Logout gagal:", error);
+      // Tambahkan logika untuk menampilkan error jika diperlukan
+    }
   };
 
   return (

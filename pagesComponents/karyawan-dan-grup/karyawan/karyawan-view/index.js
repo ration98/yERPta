@@ -130,7 +130,8 @@ function PenggunaView({ initialData }) {
     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
     transition: "background-color 0.3s ease",
     maxWidth: "80%",
-    margin: "0 auto", "&:hover": {
+    margin: "0 auto",
+    "&:hover": {
       backgroundColor: "rgba(0, 0, 0, 0.2)",
     },
   };
@@ -166,7 +167,9 @@ function PenggunaView({ initialData }) {
             text: "Data telah dihapus",
             icon: "success",
             showConfirmButton: false,
-          }).then(() => router.push("/karyawan-dan-grup/karyawan/karyawan-list"));
+          }).then(() =>
+            router.push("/karyawan-dan-grup/karyawan/karyawan-list")
+          );
         } catch (error) {
           console.error(error);
           Swal.fire({
@@ -474,9 +477,31 @@ function PenggunaView({ initialData }) {
                 </Typography>
                 <Typography variant="body1">
                   {data["tglLoginTerakhir"]
-                    ? `${formatDate(data["tglLoginTerakhir"])} ${formatTime(
-                        data["tglLoginTerakhir"]
-                      )}`
+                    ? (() => {
+                        const date = new Date(
+                          data["tglLoginTerakhir"].replace(" ", "T")
+                        );
+
+                        // Format tanggal menjadi "dd-MM-yyyy"
+                        const formattedDate = date
+                          .toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })
+                          .replace(/\//g, "-");
+
+                        // Format waktu menjadi "HH:mm:ss"
+                        const formattedTime = date
+                          .toLocaleTimeString("id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                          })
+                          .replace(/\./g, ":");
+
+                        return `${formattedDate} ${formattedTime}`; // Gabungkan tanggal dan waktu
+                      })()
                     : "-"}
                 </Typography>
               </Box>

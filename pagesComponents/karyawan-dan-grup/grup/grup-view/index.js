@@ -90,7 +90,7 @@ function GrupView({ initialData }) {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, " - ");
   };
 
   const StyledBoxKridensial = {

@@ -4,7 +4,6 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { loginUser } from "../../../../api/auth/login";
 import { useRouter } from "next/router";
-import Cookies from "js-cookie";
 import { useUser } from "../../../../context/userContext";
 
 // @mui material components
@@ -26,8 +25,7 @@ import MDButton from "../../../../components/MDButton";
 
 // Authentication layout components
 import BasicLayout from "../../components/BasicLayout";
-import intelsys from "../../../../assets/images/IntelsysLogoWithBg.png";
-import intelsys2 from "../../../../assets/images/IntelsysLogoWithBg-removebg.png";
+import intelsys from "../../../../assets/images/IntelsysLogoWithBg-removebg.png";
 // Images
 import bgImage from "../../../../assets/images/bg-sign-in-basic.jpeg";
 
@@ -35,6 +33,7 @@ import bgImage from "../../../../assets/images/bg-sign-in-basic.jpeg";
 
 // Next.js Link component
 import Link from "next/link";
+import { Password } from "@mui/icons-material";
 
 // const bgImage = require("../../../../assets/images/bg-sign-in-basic.jpeg").default;
 // console.log("Background Image Path:", bgImage);
@@ -48,46 +47,205 @@ function Basic() {
   const { setUser, setExpiresAt } = useUser();
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
+  const [username, setUsername] = useState("");
   const [isClient, setIsClient] = useState(false);
   const { login } = useUser();
 
   useEffect(() => {
     setIsClient(true);
+
+    const savedRememberMe = localStorage.getItem("rememberMe") === "true";
+    const savedUsername = localStorage.getItem("username") || "";
+
+    setRememberMe(savedRememberMe);
+
+    if (savedRememberMe && savedUsername) {
+      setUsername(savedUsername); //set state lokal untuk username
+    }
   }, []);
 
-  const handleSetRememberMe = () => setRememberMe(!rememberMe);
+  const handleSetRememberMe = () => {
+    const newRememberMe = !rememberMe;
+    setRememberMe(newRememberMe);
+
+    if (!newRememberMe) {
+      //hapus data jika "ingat saya" dimatikan
+      localStorage.removeItem("rememberMe");
+      localStorage.removeItem("username");
+    } else {
+      //simpan data jika diaktifkan
+      localStorage.setItem("rememberMe", "true");
+      if (username) {
+        localStorage.setItem("username", username);
+      }
+    }
+  };
 
   //handlelogin local storage
   const handleLogin = async (values, { setSubmitting, setFieldError }) => {
     try {
+      // Panggil API loginUser untuk autentikasi
       const response = await loginUser({
         namaPengguna: values.namaPengguna,
         kataSandi: values.kataSandi,
       });
 
-      if (response && response.expiresIn) {
+      if (response.status === 403) {
+        // Jika akun tidak aktif
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Akun Anda nonaktif. Silakan hubungi admin.",
+        });
+      } else if (response && response.expiresIn) {
+        // Jika login berhasil
         const now = Math.floor(Date.now() / 1000);
         setUser(response);
         setExpiresAt(now + response.expiresIn);
         localStorage.setItem("expiresAt", now + response.expiresIn);
+
         Swal.fire({
           icon: "success",
           title: "Berhasil",
-          text: "Login berhasil",
+          text: `Selamat datang, ${response.namaPengguna}!`,
+          // imageUrl: response.foto, // Foto pengguna dari backend
+          // imageWidth: 100,
+          // imageHeight: 100,
+          showConfirmButton: false,
+          timer: 3000, // Alert otomatis tertutup
         });
-        // Redirect ke halaman analytics
+
+        // Simpan token dan properti lainnya di localStorage (opsional)
+        // localStorage.setItem("token", response.token);
+        // localStorage.setItem("foto", response.foto); // Simpan foto ke localStorage jika diperlukan
+
+        // Redirect ke halaman dashboard
         router.push("/dashboards/analytics");
       } else {
+        // Jika nama pengguna atau kata sandi salah
         Swal.fire({
           icon: "error",
           title: "Gagal",
-          text: "Nama pengguna atau kata sandi salah",
+          text: "Nama pengguna atau kata sandi salah.",
+        });
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+
+      // Tangani error berdasarkan status respons dari backend
+      // if (error.response?.status === 401) {
+      //   setFieldError("namaPengguna", "Nama pengguna atau kata sandi salah.");
+      //   Swal.fire({
+      //     icon: "error",
+      //     title: "Gagal",
+      //     text: "Nama pengguna atau kata sandi salah.",
+      //   });
+      // } else {
+      //   Swal.fire({
+      //     icon: "error",
+      //     title: "Kesalahan",
+      //     text: "Terjadi kesalahan, silakan coba lagi.",
+      //   });
+      // }
+      const status = error.response?.status; // Pastikan response ada
+      if (status === 401) {
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Nama pengguna atau kata sandi salah.",
+        });
+      } else if (status === 403) {
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Akun Anda nonaktif. Silakan hubungi admin.",
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Kesalahan",
+          text: "Terjadi kesalahan, silakan coba lagi.",
         });
       }
     } finally {
+      // Hentikan status loading di Formik
       setSubmitting(false);
     }
   };
+
+  // const handleLogin = async (values, { setSubmitting, setFieldError }) => {
+  //   try {
+  //     const response = await loginUser({
+  //       namaPengguna: values.namaPengguna,
+  //       kataSandi: values.kataSandi,
+  //     });
+
+  //     if (response.status === 403) {
+  //       // Akun tidak aktif, tampilkan pesan error
+  //       Swal.fire({
+  //         icon: "error",
+  //         title: "Gagal",
+  //         // text: "Akun Anda nonaktif. Silakan hubungi admin.",
+  //         text: "Akun Anda Nonaktif.",
+  //       });
+  //     } else if (response) {
+  //       setUser(response);
+  //       Swal.fire({
+  //         icon: "success",
+  //         title: "Berhasil",
+  //         text: "Login berhasil",
+  //       });
+  //       // Redirect ke halaman analytics
+  //       router.push("/dashboards/analytics");
+  //     } else {
+  //       Swal.fire({
+  //         icon: "error",
+  //         title: "Gagal",
+  //         text: "Nama pengguna atau kata sandi salah",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Gagal",
+  //       text: "Terjadi kesalahan, silakan coba lagi.",
+  //     });
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
+
+  // const handleLogin = async (values, { setSubmitting, setFieldError }) => {
+  //   try {
+  //     const response = await loginUser({
+  //       namaPengguna: values.namaPengguna,
+  //       kataSandi: values.kataSandi,
+  //     });
+
+  //     if (response && response.expiresIn) {
+  //       const now = Math.floor(Date.now() / 1000);
+  //       setUser(response);
+  //       setExpiresAt(now + response.expiresIn);
+  //       localStorage.setItem("expiresAt", now + response.expiresIn);
+  //       Swal.fire({
+  //         icon: "success",
+  //         title: "Berhasil",
+  //         text: "Login berhasil",
+  //       });
+  //       // Redirect ke halaman analytics
+  //       router.push("/dashboards/analytics");
+  //     } else {
+  //       Swal.fire({
+  //         icon: "error",
+  //         title: "Gagal",
+  //         text: "Nama pengguna atau kata sandi salah",
+  //       });
+  //     }
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
 
   if (!isClient) {
     return null;
@@ -137,7 +295,7 @@ function Basic() {
                 }}
               >
                 <img
-                  src={intelsys2.src || intelsys2}
+                  src={intelsys.src || intelsys}
                   alt="IntelsysLogo"
                   style={{
                     textAlign: "center",
@@ -177,7 +335,13 @@ function Basic() {
 
         <MDBox pt={4} pb={3} px={3}>
           <Formik
-            initialValues={{ namaPengguna: "", kataSandi: "" }}
+            initialValues={{
+              namaPengguna:
+                localStorage.getItem("rememberMe") === "true"
+                  ? localStorage.getItem("username") || ""
+                  : "",
+              kataSandi: "",
+            }}
             validationSchema={validationSchema}
             onSubmit={handleLogin}
           >
@@ -185,12 +349,23 @@ function Basic() {
               <Form>
                 <MDBox mb={2}>
                   <Field name="namaPengguna">
-                    {({ field }) => (
+                    {({ field, form }) => (
                       <MDInput
                         type="text"
                         label="Nama Pengguna"
                         fullWidth
                         {...field}
+                        value={username || field.value} // Gunakan nilai dari Formik
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setUsername(value); // Update state lokal
+                          form.setFieldValue("namaPengguna", value); // Update nilai Formik
+
+                          // Simpan ke localStorage jika rememberMe aktif
+                          if (rememberMe) {
+                            localStorage.setItem("username", value);
+                          }
+                        }}
                         style={{ color: "#263238" }} // Warna teks lebih tegas
                         placeholder="Masukkan nama pengguna" // Placeholder lebih jelas
                       />
